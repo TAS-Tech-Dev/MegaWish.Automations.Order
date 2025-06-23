@@ -9,6 +9,7 @@ services:
       - .env
     environment:
       - N8N_SECURE_COOKIE=false
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false
     ports:
       - "5679:5678"
     networks:
