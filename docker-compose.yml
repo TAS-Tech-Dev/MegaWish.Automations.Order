@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  n8n:
+    image: n8nio/n8n:1.93.0
+    container_name: n8n-mw-order
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "5679:5678"
+    networks:
+      - app-network
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./templates:/home/node/imports
+
+  postgres:
+    image: postgres:15
+    container_name: postgres-mw-order
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - n8n_pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - app-network
+
+  redis:
+    image: redis:alpine
+    container_name: n8n_redis-mw-order
+    restart: always
+    ports:
+      - "6380:6379"
+    volumes:
+      - n8n_redis_data:/data
+    networks:
+      - app-network
+
+  caddy:
+    image: caddy:latest
+    container_name: caddy-mw-order
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - n8n
+    networks:
+      - app-network
+
+volumes:
+  n8n_data:
+  n8n_redis_data:
+  n8n_pg_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  app-network:
+    driver: bridge

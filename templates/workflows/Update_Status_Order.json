@@ -1,0 +1,382 @@
+{
+  "name": "Update Status Order",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 2
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        300,
+        0
+      ],
+      "id": "0bd87a43-d5ce-4df1-82fb-8a52998e4bfc",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://megawish-ms-services-qas-42162d93c577.herokuapp.com/api/Order/pending",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "*/*"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "id": "7d3f9b56-b9a7-4b24-bdbe-bae9b4012585",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "47b46f64-4218-499d-942c-ca88415019b2",
+              "name": "data.orders",
+              "value": "={{ $json.data.orders }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        860,
+        0
+      ],
+      "id": "b1c1d7f1-497a-432d-84ba-9dd05b769810",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1300,
+        0
+      ],
+      "id": "f0bd2792-7b02-4103-a1df-f45e4a70c1da",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data.orders",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1080,
+        0
+      ],
+      "id": "5a0b6dca-aeb0-48f4-8c7d-3c687daf082d",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1740,
+        20
+      ],
+      "id": "65610ec0-0949-449d-b05f-a5a452e25b8d",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9d83412b-e714-4a08-b3c3-945ec5ccdadb",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1920,
+        20
+      ],
+      "id": "c811b7f8-4f42-48f6-a48b-6b5168f234ac",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1560,
+        -220
+      ],
+      "id": "03d77cda-be0f-4128-a248-f19da1259c75",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $('Configs').item.json.Services_BaseUrl }}/Order/{{ $('Loop Over Items').item.json.id }}/status",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "*/*"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "orderId",
+              "value": "={{ $('Loop Over Items').item.json.id }}"
+            },
+            {
+              "name": "status",
+              "value": "={{ $('Loop Over Items').item.json.status }}"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2140,
+        0
+      ],
+      "id": "b33282f3-a885-4d93-8be8-ca203b4c3cc8",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "10ce61e6-d409-4b3a-93fd-4aee7f01cf56",
+              "name": "Payment_BaseUrl",
+              "value": "https://megawish-payment-proccess-qas-280e4b7b28e7.herokuapp.com/api",
+              "type": "string"
+            },
+            {
+              "id": "cff24b7d-f896-4512-99a1-792fd9d17e42",
+              "name": "Services_BaseUrl",
+              "value": "https://megawish-ms-services-qas-42162d93c577.herokuapp.com/api",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        480,
+        0
+      ],
+      "id": "f564375d-401d-4635-900b-70c4affb5191",
+      "name": "Configs"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Configs').item.json.Payment_BaseUrl }}/Payments/by-order/{{ $json.id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1560,
+        20
+      ],
+      "id": "5d8a0ffd-4ae5-4330-9dde-568d3feab76e",
+      "name": "Get Payment Status By Order Id"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Configs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Payment Status By Order Id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configs": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Payment Status By Order Id": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "eb32c88f-884c-4014-a5ca-6a50d6e7b2d8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1dac8b887eea51519ca5afc1ee67507bd3d4d4d6a557d40e0f9cb92339e1953c"
+  },
+  "id": "0SXgUaoEF1aay456",
+  "tags": []
+}
