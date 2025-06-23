@@ -1,24 +1,26 @@
 version: '3.8'
 
 services:
-  n8n:
+  n8n-mw-order:
     image: n8nio/n8n:1.93.0
     container_name: n8n-mw-order
     restart: always
     env_file:
       - .env
+    environment:
+      - N8N_SECURE_COOKIE=false
     ports:
       - "5679:5678"
     networks:
       - app-network
     depends_on:
-      - postgres
-      - redis
+      - postgres-mw-order
+      - redis-mw-order
     volumes:
       - n8n_data:/home/node/.n8n
       - ./templates:/home/node/imports
 
-  postgres:
+  postgres-mw-order:
     image: postgres:15
     container_name: postgres-mw-order
     restart: always
@@ -33,7 +35,7 @@ services:
     networks:
       - app-network
 
-  redis:
+  redis-mw-order:
     image: redis:alpine
     container_name: n8n_redis-mw-order
     restart: always
@@ -44,19 +46,18 @@ services:
     networks:
       - app-network
 
-  caddy:
+  caddy-mw-order:
     image: caddy:latest
     container_name: caddy-mw-order
     restart: always
     ports:
-      - "81:80"
-      - "444:443"
+      - "5680:5680"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - n8n
+      - n8n-mw-order
     networks:
       - app-network
 
